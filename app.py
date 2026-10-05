@@ -148,24 +148,24 @@ with col_bottom2:
 
 # --- 6. DATA SOURCES ---
 st.markdown("<br>", unsafe_allow_html=True)
-with st.expander("📚 Data Sources", expanded=False):
+with st.expander("📚 Data Sources (Methodology & Baseline Parameters)", expanded=False):
     st.markdown("""
-    **1. Grid Rate Inflation & Impact on Battery Production:**
-    > International Energy Agency (IEA). *"Global Supply Chains of EV Batteries."* (2022).
+    **1. Grid Rate Inflation & Gigafactory Energy Intensity:**
+    > International Energy Agency (IEA). *"Global Supply Chains of EV Batteries."* 
     > <a href="https://www.iea.org/reports/global-supply-chains-of-ev-batteries" class="reference-link" target="_blank">IEA Official Report</a>
-    <br><span style="font-size: 0.85em; color: gray;"><i>(Validates the extreme energy intensity of cell manufacturing—modeling how global electricity price spikes directly inflate gigafactory operational expenditure).</i></span>
+    <br><span style="font-size: 0.85em; color: gray;"><i>(Validates the extreme energy intensity of battery manufacturing—specifically the ~45 kWh of electricity required per 1 kWh of cell capacity—and models the operational risk of global grid price inflation).</i></span>
 
     <br>
 
-    **2. Microgrid OPEX Reduction & Resilience:**
-    > National Renewable Energy Laboratory (NREL) / US Department of Energy. *"Economic and Resilience Benefits of Microgrids."*
-    > <a href="https://www.nrel.gov/grid/microgrids.html" class="reference-link" target="_blank">NREL Microgrid Research Platform</a>
-    <br><span style="font-size: 0.85em; color: gray;"><i>(Demonstrates the financial framework for how industrial facilities deploy on-site microgrids to offset grid pricing volatility and secure long-term CapEx returns).</i></span>
+    **2. Microgrid OPEX Reduction & NPV Optimization:**
+    > National Renewable Energy Laboratory (NREL) / US Department of Energy. *"REopt®: Renewable Energy Integration & Optimization."*
+    > <a href="https://reopt.nrel.gov/" class="reference-link" target="_blank">NREL REopt Platform</a>
+    <br><span style="font-size: 0.85em; color: gray;"><i>(The industry-standard techno-economic modeling platform used to validate how industrial microgrids offset legacy grid exposure to generate a positive Net Present Value).</i></span>
 
     <br>
 
-    **3. CapEx Calculation Methodology (EVM Framework):**
-    > Project Management Institute (PMI). *"Practice Standard for Earned Value Management."*
-    > <a href="https://www.pmi.org/pmbok-guide-standards/practice-guides/earned-value-management" class="reference-link" target="_blank">PMI Global Standards</a>
-    <br><span style="font-size: 0.85em; color: gray;"><i>(The definitive, globally recognized mathematical standard used in this tracker to calculate the Schedule Performance Index (SPI), Cost Performance Index (CPI), and the Estimate at Completion (EAC)).</i></span>
+    **3. Earned Value Management (EVM) Forecasting:**
+    > National Aeronautics and Space Administration (NASA). *"Earned Value Management (EVM) Implementation Handbook."*
+    > <a href="https://www.nasa.gov/ocfo/ppc-corner/evm/" class="reference-link" target="_blank">NASA EVM Central</a>
+    <br><span style="font-size: 0.85em; color: gray;"><i>(Validates the strict mathematical formulas used for the Cost Performance Index (CPI), Schedule Performance Index (SPI), and Estimate at Completion (EAC) required for gigafactory capital scaling).</i></span>
     """, unsafe_allow_html=True)
