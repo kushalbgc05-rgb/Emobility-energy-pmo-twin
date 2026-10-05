@@ -88,7 +88,6 @@ dcf = [cf / df for cf, df in zip(cash_flows, discount_factors)]
 npv_mln = sum(dcf)
 
 # --- 4. EXECUTIVE METRICS ROW ---
-
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
@@ -102,20 +101,57 @@ with col4:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# --- 5. DATA VISUALIZATIONS (RESPONSIVE TO THEME) ---
-
+# --- 5. DATA VISUALIZATIONS ---
 st.subheader("I. 5-Year Exponential Grid Exposure vs. Microgrid Protection")
 fig_forecast = go.Figure()
 fig_forecast.add_trace(go.Scatter(x=years, y=legacy_opex_mln, fill='tozeroy', mode='lines+markers', name='Legacy OPEX (100% Grid)', line=dict(color='#e11d48', width=3)))
 fig_forecast.add_trace(go.Scatter(x=years, y=microgrid_opex_mln, fill='tozeroy', mode='lines+markers', name=f'Protected OPEX ({grid_offset_pct*100:.0f}% Offset)', line=dict(color='#059669', width=3)))
 fig_forecast.update_layout(height=380, yaxis_title="Annual Energy Cost (€M)", hovermode="x unified", margin=dict(t=20, b=20, l=20, r=20))
-# Using Streamlit's native theme engine for Plotly
 st.plotly_chart(fig_forecast, use_container_width=True, theme="streamlit")
+
+# Layout for the bottom two charts
+col_bottom1, col_bottom2 = st.columns(2)
+
+with col_bottom1:
+    st.subheader("II. Execution Health (EVM)")
+    months_arr = np.arange(0, actual_duration + 1)
+    
+    # Reconstructing the linear approximation for EVM metrics based on user's inputs
+    pv_arr = np.where(months_arr <= planned_duration, (bac_capex_mln / planned_duration) * months_arr, bac_capex_mln)
+    ev_arr = (bac_capex_mln / actual_duration) * months_arr
+    ac_arr = (eac_capex_mln / actual_duration) * months_arr
+    
+    fig_evm = go.Figure()
+    fig_evm.add_trace(go.Scatter(x=months_arr, y=pv_arr, mode='lines', name='Planned Value (PV)', line=dict(dash='dash', color='gray')))
+    fig_evm.add_trace(go.Scatter(x=months_arr, y=ev_arr, mode='lines', name='Earned Value (EV)', line=dict(color='#0284c7')))
+    fig_evm.add_trace(go.Scatter(x=months_arr, y=ac_arr, mode='lines', name='Actual Cost (AC)', line=dict(color='#d97706')))
+    
+    fig_evm.update_layout(height=350, xaxis_title="Months", yaxis_title="Cost (€M)", margin=dict(t=20, b=20, l=20, r=20), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
+    st.plotly_chart(fig_evm, use_container_width=True, theme="streamlit")
+
+with col_bottom2:
+    st.subheader("III. Capex NPV Waterfall")
+    waterfall_labels = ["Initial Capex"] + [str(y) for y in years] + ["Net Present Value"]
+    waterfall_measures = ["relative"] + ["relative"] * len(years) + ["total"]
+    waterfall_values = dcf + [0]
+    
+    fig_waterfall = go.Figure(go.Waterfall(
+        name="NPV Waterfall", orientation="v",
+        measure=waterfall_measures,
+        x=waterfall_labels,
+        y=waterfall_values,
+        decreasing={"marker": {"color": "#e11d48"}},
+        increasing={"marker": {"color": "#059669"}},
+        totals={"marker": {"color": "#0284c7"}}
+    ))
+    
+    fig_waterfall.update_layout(height=350, yaxis_title="Discounted Cash Flow (€M)", margin=dict(t=20, b=20, l=20, r=20))
+    st.plotly_chart(fig_waterfall, use_container_width=True, theme="streamlit")
 
 
 # --- 6. DATA SOURCES ---
 st.markdown("<br>", unsafe_allow_html=True)
-with st.expander("Data Sources", expanded=False):
+with st.expander("📚 Data Sources", expanded=False):
     st.markdown("""
     **1. Earned Value Management (EVM) Framework:**
     > Project Management Institute (PMI). *"A Guide to the Project Management Body of Knowledge (PMBOK® Guide)."* 
