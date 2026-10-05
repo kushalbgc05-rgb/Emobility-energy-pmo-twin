@@ -148,24 +148,24 @@ with col_bottom2:
 
 # --- 6. DATA SOURCES ---
 st.markdown("<br>", unsafe_allow_html=True)
-with st.expander("📚 Data Sources (Methodology & Baseline Parameters)", expanded=False):
+with st.expander("📚 Data Sources", expanded=False):
     st.markdown("""
-    **1. Earned Value Management (EVM) Forecasting:**
-    > Batselier, J., & Vanhoucke, M. *"Empirical Evaluation of Earned Value Management Forecasting Accuracy for Time and Cost."* **Journal of Construction Engineering and Management** (2015).
-    > <a href="https://doi.org/10.1061/(ASCE)CO.1943-7862.0000994" class="reference-link" target="_blank">DOI: 10.1061/(ASCE)CO.1943-7862.0000994</a>
-    <br><span style="font-size: 0.85em; color: gray;"><i>(Validates the mathematical formulas used for Cost Performance Index (CPI), Schedule Performance Index (SPI), and Estimate at Completion (EAC) in capital megaprojects).</i></span>
+    **1. Grid Rate Inflation & Impact on Battery Production:**
+    > International Energy Agency (IEA). *"Global Supply Chains of EV Batteries."* (2022).
+    > <a href="https://www.iea.org/reports/global-supply-chains-of-ev-batteries" class="reference-link" target="_blank">IEA Official Report</a>
+    <br><span style="font-size: 0.85em; color: gray;"><i>(Validates the extreme energy intensity of cell manufacturing—modeling how global electricity price spikes directly inflate gigafactory operational expenditure).</i></span>
 
     <br>
 
-    **2. Cost of Delay (CoD) & Economic Impact of Slippage:**
-    > Flyvbjerg, B., Holm, M. S., & Buhl, S. *"What Causes Cost Overrun in Transport Infrastructure Projects?"* **Transport Reviews** (2004).
-    > <a href="https://doi.org/10.1080/0144164032000080494" class="reference-link" target="_blank">DOI: 10.1080/0144164032000080494</a>
-    <br><span style="font-size: 0.85em; color: gray;"><i>(Validates the exponential financial impact and operational cash-burn metrics associated with construction schedule slippage and Cost of Delay).</i></span>
+    **2. Microgrid OPEX Reduction & Resilience:**
+    > National Renewable Energy Laboratory (NREL) / US Department of Energy. *"Economic and Resilience Benefits of Microgrids."*
+    > <a href="https://www.nrel.gov/grid/microgrids.html" class="reference-link" target="_blank">NREL Microgrid Research Platform</a>
+    <br><span style="font-size: 0.85em; color: gray;"><i>(Demonstrates the financial framework for how industrial facilities deploy on-site microgrids to offset grid pricing volatility and secure long-term CapEx returns).</i></span>
 
     <br>
 
-    **3. Gigafactory Energy Intensity & Baseline Parameters:**
-    > Kampker, A., et al. (RWTH Aachen University - PEM). *"Techno-economic evaluation of battery cell production."* **The International Journal of Advanced Manufacturing Technology** (2019).
-    > <a href="https://doi.org/10.1007/s40684-019-00109-9" class="reference-link" target="_blank">DOI: 10.1007/s40684-019-00109-9</a>
-    <br><span style="font-size: 0.85em; color: gray;"><i>(Validates the specific manufacturing baseline inputs used in this tracker: the 15% factory scrap rate, the 45 kWh/kWh energy intensity metric, and microgrid offset parameters).</i></span>
+    **3. CapEx Calculation Methodology (EVM Framework):**
+    > Project Management Institute (PMI). *"Practice Standard for Earned Value Management."*
+    > <a href="https://www.pmi.org/pmbok-guide-standards/practice-guides/earned-value-management" class="reference-link" target="_blank">PMI Global Standards</a>
+    <br><span style="font-size: 0.85em; color: gray;"><i>(The definitive, globally recognized mathematical standard used in this tracker to calculate the Schedule Performance Index (SPI), Cost Performance Index (CPI), and the Estimate at Completion (EAC)).</i></span>
     """, unsafe_allow_html=True)
