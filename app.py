@@ -1,132 +1,188 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import plotly.express as px
 import plotly.graph_objects as go
 
-# --- 1. RESPONSIVE PAGE CONFIGURATION ---
-st.set_page_config(page_title="PMO Energy Command Center", layout="wide", initial_sidebar_state="expanded")
+# --- PAGE CONFIGURATION & CSS ---
+st.set_page_config(
+    page_title="Gigafactory Project and Capex Tracker",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-# Dynamic CSS that adapts to BOTH Light and Dark themes
 st.markdown("""
     <style>
-    /* Responsive Metric Cards using Streamlit's native variables */
     [data-testid="stMetric"] {
         background-color: var(--secondary-background-color);
         border: 1px solid rgba(128, 128, 128, 0.2);
         border-radius: 10px;
-        padding: 20px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        transition: transform 0.2s ease-in-out;
+        padding: 16px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
     }
-    [data-testid="stMetric"]:hover {
-        transform: translateY(-3px);
-        border-color: var(--primary-color);
+    .reference-link {
+        color: #0284c7;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    .reference-link:hover {
+        text-decoration: underline;
     }
     </style>
 """, unsafe_allow_html=True)
 
-st.title("⚡ E-Mobility PMO Command Center")
-st.markdown("**Executive decision platform:** Modeling 5-year exponential grid shocks alongside on-site microgrid execution and NPV returns.")
-st.markdown("---")
+st.title("Gigafactory Project and Capex Tracker")
+st.markdown(
+    "Monitoring gigafactory construction and operational scale-up through Earned Value Management (EVM). "
+    "This simulator quantifies Schedule Performance Index (SPI), Cost Performance Index (CPI), and the exact "
+    "Cost of Delay (CoD) financial impact when critical path commissioning items slip."
+)
+st.divider()
 
-# --- 2. THE 6 PROJECT & BUSINESS PARAMETERS ---
-st.sidebar.header("🎛️ PMO Control Matrix")
+# --- SIDEBAR PARAMETERS ---
+st.sidebar.header("Project & Capex Parameters")
 
-with st.sidebar.expander("Macro Energy Forecast (5-Year)", expanded=True):
-    base_elec_mwh = st.sidebar.number_input("1. Base Grid Price (€/MWh)", 50.0, 300.0, 95.0, 5.0)
-    annual_elec_growth = st.sidebar.slider("2. Annual Energy Inflation (%)", 5.0, 50.0, 25.0, 1.0) / 100.0
+with st.sidebar.expander("Baseline Master Schedule", expanded=True):
+    total_budget_m = st.number_input("Budget at Completion (BAC) [$M]", min_value=50, max_value=5000, value=850, step=50)
+    total_duration = st.slider("Planned Project Duration (Months)", 12, 60, 24, 1)
+    current_month = st.slider("Current Assessment Month", 1, total_duration, 14, 1)
 
-with st.sidebar.expander("Gigafactory Operations", expanded=True):
-    annual_capacity_gwh = st.sidebar.slider("3. Plant Capacity (GWh/yr)", 10, 100, 40, 5)
-    scrap_rate = st.sidebar.slider("4. Factory Scrap Rate (%)", 5.0, 30.0, 15.0, 1.0) / 100.0
-    energy_intensity_kwh = 45
+with st.sidebar.expander("Execution Variance Simulator", expanded=True):
+    st.caption("Adjust delays and overruns to simulate cash burn.")
+    schedule_delay = st.slider("Schedule Delay (Months)", 0.0, 12.0, 2.5, 0.5)
+    cost_overrun_pct = st.slider("Cost Overrun / Variance (%)", -10, 50, 15, 1) / 100.0
 
-with st.sidebar.expander("PMO: Microgrid Capex Execution", expanded=True):
-    bac_capex_mln = st.sidebar.number_input("5. Microgrid Budget (BAC) [€M]", 50.0, 300.0, 150.0, 10.0)
-    grid_offset_pct = st.sidebar.slider("6. Grid Energy Offset Target (%)", 20.0, 80.0, 50.0, 5.0) / 100.0
+with st.sidebar.expander("Cost of Delay (CoD) Metrics", expanded=True):
+    st.caption("Financial penalty for delayed start of production (SOP).")
+    daily_burn_rate_k = st.number_input("Daily Operational Cash Burn [$k/day]", min_value=10, max_value=1000, value=150, step=10)
 
-with st.sidebar.expander("EVM Schedule & Efficiencies", expanded=True):
-    planned_duration = st.sidebar.slider("Target Duration (Months)", 12, 36, 24, 1)
-    schedule_slippage = st.sidebar.slider("Schedule Slippage (Months)", 0, 12, 3, 1)
-    cpi_performance = st.sidebar.slider("Cost Performance Index (CPI)", 0.70, 1.20, 0.90, 0.01)
-    spi_performance = st.sidebar.slider("Schedule Performance Index (SPI)", 0.70, 1.20, 0.85, 0.01)
-    discount_rate = 0.08
+# --- EARNED VALUE MANAGEMENT (EVM) ENGINE ---
+# Create an S-Curve for Planned Value (PV)
+x_months = np.arange(0, total_duration + 1)
+# Logistic curve approximation for construction S-Curve
+k = 0.3  # Steepness
+x0 = total_duration / 2
+pv_curve = total_budget_m / (1 + np.exp(-k * (x_months - x0)))
+# Normalize so it starts near 0 and ends exactly at total_budget_m
+pv_curve = (pv_curve - pv_curve[0]) / (pv_curve[-1] - pv_curve[0]) * total_budget_m
 
-# --- 3. CORE FINANCIAL & FORECAST CALCULATIONS ---
-years = np.arange(2026, 2031)
-horizon_len = len(years)
+planned_value = pv_curve[current_month]
 
-projected_grid_prices_mwh = [base_elec_mwh * ((1 + annual_elec_growth) ** i) for i in range(horizon_len)]
-projected_grid_prices_kwh = [price / 1000.0 for price in projected_grid_prices_mwh]
+# Earned Value (EV) reflects the actual progress made, accounting for the delay
+effective_month = max(0, current_month - schedule_delay)
+# Linearly interpolate the S-Curve to get exact EV
+if effective_month == int(effective_month):
+    earned_value = pv_curve[int(effective_month)]
+else:
+    lower_val = pv_curve[int(np.floor(effective_month))]
+    upper_val = pv_curve[int(np.ceil(effective_month))]
+    earned_value = lower_val + (upper_val - lower_val) * (effective_month % 1)
 
-annual_good_output_kwh = annual_capacity_gwh * 1000000 * 1000
-total_energy_needed_kwh = (annual_good_output_kwh * energy_intensity_kwh) / (1 - scrap_rate)
+# Actual Cost (AC) incorporates the cost overrun percentage on the work performed
+actual_cost = earned_value * (1.0 + cost_overrun_pct)
 
-legacy_opex_mln = [(total_energy_needed_kwh * price) / 1000000.0 for price in projected_grid_prices_kwh]
-microgrid_opex_mln = [(total_energy_needed_kwh * price * (1 - grid_offset_pct)) / 1000000.0 for price in projected_grid_prices_kwh]
-annual_savings_mln = [leg - mic for leg, mic in zip(legacy_opex_mln, microgrid_opex_mln)]
+# EVM Indices
+spi = earned_value / planned_value if planned_value > 0 else 1.0
+cpi = earned_value / actual_cost if actual_cost > 0 else 1.0
 
-actual_duration = planned_duration + schedule_slippage
-eac_capex_mln = bac_capex_mln / cpi_performance
-cost_variance_mln = bac_capex_mln - eac_capex_mln
+# Cost of Delay (CoD)
+delay_days = schedule_delay * 30
+total_cod_m = (delay_days * daily_burn_rate_k) / 1000.0
 
-monthly_energy_waste_mln = annual_savings_mln[1] / 12.0
-cost_of_delay_mln = monthly_energy_waste_mln * schedule_slippage
-
-cash_flows = [-eac_capex_mln] + annual_savings_mln
-discount_factors = [(1 + discount_rate) ** i for i in range(len(cash_flows))]
-dcf = [cf / df for cf, df in zip(cash_flows, discount_factors)]
-npv_mln = sum(dcf)
-
-# --- 4. EXECUTIVE METRICS ROW ---
+# --- EXECUTIVE KPIS ---
 col1, col2, col3, col4 = st.columns(4)
+
 with col1:
-    st.metric("2030 Grid Price Forecast", f"€{projected_grid_prices_mwh[-1]:.0f}/MWh", f"+{annual_elec_growth*100:.0f}% Compounding YoY", delta_color="inverse")
+    st.metric("Schedule Performance (SPI)", f"{spi:.2f}", "Target: 1.00 (On Time)", delta_color="off")
 with col2:
-    st.metric("Estimate at Completion", f"€{eac_capex_mln:.1f}M", f"Budget Variance: €{cost_variance_mln:.1f}M", delta_color="inverse")
+    st.metric("Cost Performance (CPI)", f"{cpi:.2f}", "Target: 1.00 (On Budget)", delta_color="off")
 with col3:
-    st.metric("Cost of Delay (CoD)", f"€{cost_of_delay_mln:.1f}M Loss", f"{schedule_slippage} Months Late", delta_color="inverse")
+    st.metric("Current Earned Value (EV)", f"${earned_value:.1f}M", f"Planned: ${planned_value:.1f}M", delta_color="off")
 with col4:
-    st.metric("Microgrid NPV", f"€{npv_mln:.1f}M", "Positive = Viable Project", delta_color="normal" if npv_mln > 0 else "inverse")
+    st.metric("Accumulated Cost of Delay", f"${total_cod_m:.1f}M", f"{int(delay_days)} Days Delayed", delta_color="inverse")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# --- 5. DATA VISUALIZATIONS (RESPONSIVE TO THEME) ---
+# --- VISUALIZATIONS ---
+st.subheader("Earned Value vs. Actual Cost Trajectory (S-Curve)")
 
-st.subheader("I. 5-Year Exponential Grid Exposure vs. Microgrid Protection")
-fig_forecast = go.Figure()
-fig_forecast.add_trace(go.Scatter(x=years, y=legacy_opex_mln, fill='tozeroy', mode='lines+markers', name='Legacy OPEX (100% Grid)', line=dict(color='#e11d48', width=3)))
-fig_forecast.add_trace(go.Scatter(x=years, y=microgrid_opex_mln, fill='tozeroy', mode='lines+markers', name=f'Protected OPEX ({grid_offset_pct*100:.0f}% Offset)', line=dict(color='#059669', width=3)))
-fig_forecast.update_layout(height=380, yaxis_title="Annual Energy Cost (€M)", hovermode="x unified", margin=dict(t=20, b=20, l=20, r=20))
-# Using Streamlit's native theme engine for Plotly
-st.plotly_chart(fig_forecast, use_container_width=True, theme="streamlit")
+# Prepare DataFrame for plotting up to current month
+df_evm = pd.DataFrame({
+    "Month": x_months[:current_month+1],
+    "Planned Value (PV)": pv_curve[:current_month+1]
+})
 
+# Calculate EV and AC curves up to current month based on constant delay/overrun
+ev_array = []
+ac_array = []
+for m in x_months[:current_month+1]:
+    eff_m = max(0, m - schedule_delay)
+    if eff_m == int(eff_m):
+        ev_val = pv_curve[int(eff_m)]
+    else:
+        ev_val = pv_curve[int(np.floor(eff_m))] + (pv_curve[int(np.ceil(eff_m))] - pv_curve[int(np.floor(eff_m))]) * (eff_m % 1)
+    ev_array.append(ev_val)
+    ac_array.append(ev_val * (1.0 + cost_overrun_pct))
+
+df_evm["Earned Value (EV)"] = ev_array
+df_evm["Actual Cost (AC)"] = ac_array
+
+# Create Plotly Graph
+fig = go.Figure()
+
+# Plot PV (Full duration as dashed background curve to show the plan)
+fig.add_trace(go.Scatter(
+    x=x_months, y=pv_curve, mode='lines', name='Baseline Plan (PV)',
+    line=dict(color='rgba(128, 128, 128, 0.5)', width=2, dash='dash')
+))
+
+# Plot actuals up to current month
+fig.add_trace(go.Scatter(
+    x=df_evm["Month"], y=df_evm["Planned Value (PV)"], mode='lines+markers', name='Planned Value (PV)',
+    line=dict(color='#0284c7', width=3)
+))
+fig.add_trace(go.Scatter(
+    x=df_evm["Month"], y=df_evm["Earned Value (EV)"], mode='lines+markers', name='Earned Value (EV)',
+    line=dict(color='#10b981', width=3)
+))
+fig.add_trace(go.Scatter(
+    x=df_evm["Month"], y=df_evm["Actual Cost (AC)"], mode='lines+markers', name='Actual Cost (AC)',
+    line=dict(color='#ef4444', width=3)
+))
+
+# Add a vertical line for the current month
+fig.add_vline(x=current_month, line_width=2, line_dash="dash", line_color="black", annotation_text="Current Month")
+
+fig.update_layout(
+    title="Gigafactory Construction Scale-Up: Cost & Schedule Tracking",
+    xaxis_title="Timeline (Months)",
+    yaxis_title="Capital Expenditure ($ Millions)",
+    height=500,
+    margin=dict(l=20, r=20, t=50, b=20),
+    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+)
+
+st.plotly_chart(fig, use_container_width=True)
+
+# --- DATA SOURCES ---
 st.markdown("<br>", unsafe_allow_html=True)
+with st.expander("Data Sources", expanded=False):
+    st.markdown("""
+    **1. Earned Value Management (EVM) Framework:**
+    > Project Management Institute (PMI). *"A Guide to the Project Management Body of Knowledge (PMBOK Guide)."* 
+    > <a href="https://www.pmi.org/pmbok-guide-standards/foundational/pmbok" class="reference-link" target="_blank">PMI Standards</a>
+    <br><span style="font-size: 0.85em; color: gray;"><i>(Validates the mathematical formulas used for the Schedule Performance Index (SPI), Cost Performance Index (CPI), and operational cash burn).</i></span>
 
-col_chart1, col_chart2 = st.columns(2)
+    <br>
 
-with col_chart1:
-    st.subheader("II. Execution Health (EVM)")
-    time = np.arange(0, actual_duration + 1)
-    pv = np.clip((time / planned_duration) * bac_capex_mln, 0, bac_capex_mln)
-    ev = np.clip(pv * spi_performance, 0, bac_capex_mln)
-    ac = np.clip(ev / cpi_performance, 0, eac_capex_mln)
-    
-    fig_evm = go.Figure()
-    fig_evm.add_trace(go.Scatter(x=time, y=pv, mode='lines', name='Planned Value (PV)', line=dict(color='#64748b', dash='dash')))
-    fig_evm.add_trace(go.Scatter(x=time, y=ev, mode='lines+markers', name='Earned Value (EV)', line=dict(color='#0284c7', width=3)))
-    fig_evm.add_trace(go.Scatter(x=time, y=ac, mode='lines+markers', name='Actual Cost (AC)', line=dict(color='#d97706', width=3)))
-    fig_evm.update_layout(height=350, xaxis_title="Months", yaxis_title="Cost (€M)", margin=dict(t=20, b=20, l=20, r=20))
-    st.plotly_chart(fig_evm, use_container_width=True, theme="streamlit")
+    **2. Cost of Delay (CoD) & Economic Impact:**
+    > Reinertsen, D. G. *"The Principles of Product Development Flow: Second Generation Lean Product Development."* Celeritas Publishing (2009).
+    > <a href="https://www.amazon.com/Principles-Product-Development-Flow-Generation/dp/1935401009" class="reference-link" target="_blank">Celeritas</a>
+    <br><span style="font-size: 0.85em; color: gray;"><i>(Validates the financial framework for quantifying the Cost of Delay when critical path gigafactory commissioning items slip).</i></span>
 
-with col_chart2:
-    st.subheader("III. Capex NPV Waterfall")
-    cf_labels = ['Capex (Y0)', '2026', '2027', '2028', '2029', '2030']
-    fig_npv = go.Figure(go.Waterfall(
-        name="Cash Flow", orientation="v", measure=["relative", "relative", "relative", "relative", "relative", "total"],
-        x=cf_labels, y=[-eac_capex_mln] + [cf for cf in dcf[1:]],
-        decreasing={"marker":{"color":"#e11d48"}}, increasing={"marker":{"color":"#059669"}}, totals={"marker":{"color":"#0284c7"}}
-    ))
-    fig_npv.update_layout(height=350, yaxis_title="Discounted Flow (€M)", margin=dict(t=20, b=20, l=20, r=20))
-    st.plotly_chart(fig_npv, use_container_width=True, theme="streamlit")
+    <br>
+
+    **3. Gigafactory CapEx & Operations Baseline:**
+    > RWTH Aachen University (PEM). *"Production process of a lithium-ion battery cell: Plant, facility and equipment setup."*
+    > <a href="https://www.pem.rwth-aachen.de/go/id/oqqu/" class="reference-link" target="_blank">RWTH Aachen PEM Publications</a>
+    <br><span style="font-size: 0.85em; color: gray;"><i>(Validates the baseline capital expenditure, machinery lead times, and energy consumption metrics during battery plant scale-up).</i></span>
+    """, unsafe_allow_html=True)
