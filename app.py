@@ -157,15 +157,8 @@ with st.expander("📚 Data Sources (Methodology & Baseline Parameters)", expand
 
     <br>
 
-    **2. Microgrid OPEX Reduction & NPV Optimization:**
-    > National Renewable Energy Laboratory (NREL) / US Department of Energy. *"REopt®: Renewable Energy Integration & Optimization."*
-    > <a href="https://reopt.nrel.gov/" class="reference-link" target="_blank">NREL REopt Platform</a>
-    <br><span style="font-size: 0.85em; color: gray;"><i>(The industry-standard techno-economic modeling platform used to validate how industrial microgrids offset legacy grid exposure to generate a positive Net Present Value).</i></span>
-
-    <br>
-
-    **3. Earned Value Management (EVM) Forecasting:**
-    > National Aeronautics and Space Administration (NASA). *"Earned Value Management (EVM) Implementation Handbook."*
-    > <a href="https://www.nasa.gov/ocfo/ppc-corner/evm/" class="reference-link" target="_blank">NASA EVM Central</a>
-    <br><span style="font-size: 0.85em; color: gray;"><i>(Validates the strict mathematical formulas used for the Cost Performance Index (CPI), Schedule Performance Index (SPI), and Estimate at Completion (EAC) required for gigafactory capital scaling).</i></span>
+    **2. Industrial Microgrid OPEX Reduction & Economic Optimization:**
+    > Piasecki, P., et al. *"Smart Management of Energy Storage in Microgrid."* **Sustainability 15**, 15576 (2023). 
+    > <a href="https://doi.org/10.3390/su152115576" class="reference-link" target="_blank">DOI: 10.3390/su152115576</a>
+    <br><span style="font-size: 0.85em; color: gray;"><i>(A peer-reviewed academic research paper validating the economic framework for how industrial facilities use on-site microgrids to offset legacy grid pricing volatility, minimize energy purchase costs, and secure a positive Net Present Value).</i></span>
     """, unsafe_allow_html=True)
