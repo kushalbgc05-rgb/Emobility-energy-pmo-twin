@@ -5,7 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 # --- 1. RESPONSIVE PAGE CONFIGURATION ---
-st.set_page_config(page_title="Gigafactory Energy & Capex Command Center", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="Gigafactory Project and Capex Tracker", layout="wide", initial_sidebar_state="expanded")
 
 st.markdown("""
     <style>
@@ -32,11 +32,8 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("⚡ Gigafactory Energy Strategy & Capex Command Center")
-st.markdown(
-    "**Executive PMO Decision Suite:** Modeling 5-year macro grid inflation exposure, "
-    "on-site microgrid hedging ROI, and construction delivery governance (EVM)."
-)
+st.title("Gigafactory Project and Capex Tracker")
+st.markdown("**Executive decision platform:** Modeling 5-year exponential grid shocks alongside on-site microgrid execution and NPV returns.")
 st.markdown("---")
 
 # --- 2. PMO & OPERATIONAL CONTROLS ---
