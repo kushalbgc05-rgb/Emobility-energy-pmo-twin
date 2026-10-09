@@ -7,16 +7,52 @@ import plotly.graph_objects as go
 # --- 1. RESPONSIVE PAGE CONFIGURATION ---
 st.set_page_config(page_title="Gigafactory Project and Capex Tracker", layout="wide", initial_sidebar_state="expanded")
 
-# Custom CSS to make Plotly toolbar open sideways
+# Custom CSS for metrics and Plotly toolbar
 st.markdown("""
     <style>
-    .modebar {
+    /* Metrics styling */
+    [data-testid="stMetric"] {
+        background-color: var(--secondary-background-color);
+        border: 1px solid rgba(128, 128, 128, 0.2);
+        border-radius: 10px;
+        padding: 18px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+        transition: transform 0.2s ease-in-out;
+    }
+    [data-testid="stMetric"]:hover {
+        transform: translateY(-2px);
+        border-color: #0284c7;
+    }
+
+    /* Plotly toolbar styling */
+    .js-plotly-plot .modebar {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: white !important;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        padding: 4px;
+        display: flex;
         flex-direction: row !important;
-        flex-wrap: wrap !important;
-        justify-content: flex-start !important;
+        flex-wrap: wrap;
+        max-width: 80%;
+        overflow-x: auto;
+    }
+    .modebar-group {
+        display: flex !important;
+        flex-direction: row !important;
     }
     .modebar-btn {
         margin: 2px !important;
+    }
+    .reference-link {
+        color: #0284c7;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    .reference-link:hover {
+        text-decoration: underline;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -149,7 +185,8 @@ st.plotly_chart(
     config={
         'displayModeBar': True,
         'displaylogo': False,
-        'modeBarButtonsToRemove': ['lasso2d', 'select2d'],  # Optional: Remove unwanted buttons
+        'modeBarButtonsToRemove': ['lasso2d', 'select2d'],
+        'responsive': True
     }
 )
 
@@ -182,6 +219,7 @@ with col_bottom1:
         config={
             'displayModeBar': True,
             'displaylogo': False,
+            'responsive': True
         }
     )
 
@@ -214,6 +252,7 @@ with col_bottom2:
         config={
             'displayModeBar': True,
             'displaylogo': False,
+            'responsive': True
         }
     )
 
