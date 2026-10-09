@@ -24,20 +24,22 @@ st.markdown("""
         border-color: #0284c7;
     }
 
-    /* Plotly toolbar styling */
+    /* Plotly toolbar styling - Semi-transparent */
     .js-plotly-plot .modebar {
         position: absolute !important;
-        top: 30px !important;
+        top: 10px !important;
         right: 10px !important;
-        background-color: white !important;
+        background-color: rgba(255, 255, 255, 0.9) !important;
         border-radius: 4px !important;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
         padding: 4px !important;
         z-index: 100 !important;
+        max-width: 90% !important;
     }
     .modebar-group {
         display: flex !important;
         flex-direction: row !important;
+        flex-wrap: nowrap !important;
     }
     .modebar-btn {
         margin: 2px !important;
@@ -58,7 +60,7 @@ st.markdown("**Executive decision platform:** Modeling 5-year exponential grid s
 st.markdown("---")
 
 # --- 2. PMO & OPERATIONAL CONTROLS ---
-st.sidebar.header("🎛️ PMO Control Matrix")
+st.sidebar.header("Control Matrix")
 
 with st.sidebar.expander("1. Macro Energy Risk (5-Year)", expanded=True):
     base_elec_mwh = st.sidebar.number_input("Base Grid Price (€/MWh)", 50.0, 300.0, 95.0, 5.0)
@@ -168,11 +170,11 @@ fig_forecast.add_trace(go.Scatter(
 ))
 
 fig_forecast.update_layout(
-    height=400,
+    height=450,
     yaxis_title="Annual Plant Electricity Cost (€M/year)",
     xaxis_title="Operational Year",
     hovermode="x unified",
-    margin=dict(t=40, b=40, l=40, r=40),
+    margin=dict(t=60, b=60, l=60, r=60),
     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
     plot_bgcolor='rgba(0,0,0,0)',
     paper_bgcolor='rgba(0,0,0,0)'
@@ -206,10 +208,10 @@ with col_bottom1:
     fig_evm.add_trace(go.Scatter(x=months_arr, y=ac_arr, mode='lines', name='Actual Cost (AC)', line=dict(color='#d97706', width=2.5)))
 
     fig_evm.update_layout(
-        height=360,
+        height=400,
         xaxis_title="Construction Timeline (Months)",
         yaxis_title="Cumulative Capital Spend (€M)",
-        margin=dict(t=30, b=20, l=20, r=20),
+        margin=dict(t=40, b=40, l=40, r=40),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)'
@@ -243,9 +245,9 @@ with col_bottom2:
     ))
 
     fig_waterfall.update_layout(
-        height=360,
+        height=400,
         yaxis_title="Discounted Cash Flow (€M)",
-        margin=dict(t=30, b=20, l=20, r=20),
+        margin=dict(t=40, b=40, l=40, r=40),
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)'
     )
