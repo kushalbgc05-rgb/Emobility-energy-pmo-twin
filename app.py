@@ -37,7 +37,7 @@ st.markdown("**Executive decision platform:** Modeling 5-year exponential grid s
 st.markdown("---")
 
 # --- 2. PMO & OPERATIONAL CONTROLS ---
-st.sidebar.header("Control Matrix")
+st.sidebar.header("PMO Control Matrix")
 
 with st.sidebar.expander("1. Macro Energy Risk (5-Year)", expanded=True):
     base_elec_mwh = st.sidebar.number_input("Base Grid Price (€/MWh)", 50.0, 300.0, 95.0, 5.0)
@@ -59,11 +59,28 @@ with st.sidebar.expander("4. Project Delivery (EVM Governance)", expanded=True):
     spi_performance = st.sidebar.slider("Schedule Performance Index (SPI)", 0.70, 1.20, 0.85, 0.01)
     discount_rate = 0.08
 
-# --- 3. CORE FINANCIAL & ENERGY CALCULATIONS ---
-years = np.arange(2026, 2031)
-horizon_len = len(years)
+with st.sidebar.expander("5. Project Phasing", expanded=True):
+    construction_period_years = st.sidebar.slider("Construction Period (Years)", 1, 5, 2)
+    construction_start_year = st.sidebar.selectbox("Construction Start Year)", [2024, 2025, 2026])
 
-# 5-Year electricity trajectory
+# --- 3. CORE FINANCIAL & ENERGY CALCULATIONS ---
+# Calculate operational years (5 years after construction)
+operational_years = np.arange(2026, 2031)
+construction_years = np.arange(construction_start_year, construction_start_year + construction_period_years)
+all_years = np.concatenate([construction_years, operational_years])
+
+# Calculate total project duration in months
+total_project_months = construction_period_years * 12 + planned_duration
+actual_duration_months = total_project_months + schedule_slippage
+
+# Adjust operational years based on construction end + slippage
+construction_end_year = construction_start_year + construction_period_years - 1
+first_operational_year = construction_end_year + 1 + (schedule_slippage // 12)
+operational_years_adjusted = np.arange(first_operational_year, first_operational_year + 5)
+adjusted_all_years = np.concatenate([[construction_start_year], operational_years_adjusted])
+
+# 5-Year electricity trajectory (only for operational years)
+horizon_len = len(operational_years_adjusted)
 projected_grid_prices_mwh = [base_elec_mwh * ((1 + annual_elec_growth) ** i) for i in range(horizon_len)]
 projected_grid_prices_kwh = [price / 1000.0 for price in projected_grid_prices_mwh]
 
@@ -71,7 +88,7 @@ projected_grid_prices_kwh = [price / 1000.0 for price in projected_grid_prices_m
 annual_good_output_kwh = annual_capacity_gwh * 1_000_000
 total_energy_needed_kwh = (annual_good_output_kwh * energy_intensity_kwh) / (1 - scrap_rate)
 
-# OPEX in Millions of Euros (€M)
+# OPEX in Millions of Euros (€M) - only for operational years
 legacy_opex_mln = [(total_energy_needed_kwh * price) / 1_000_000.0 for price in projected_grid_prices_kwh]
 microgrid_opex_mln = [(total_energy_needed_kwh * price * (1 - grid_offset_pct)) / 1_000_000.0 for price in projected_grid_prices_kwh]
 annual_savings_mln = [leg - mic for leg, mic in zip(legacy_opex_mln, microgrid_opex_mln)]
@@ -82,10 +99,10 @@ eac_capex_mln = bac_capex_mln / cpi_performance
 cost_variance_mln = bac_capex_mln - eac_capex_mln
 
 # Cost of Delay based on unrealized monthly clean energy savings
-monthly_savings_year1 = annual_savings_mln[0] / 12.0
+monthly_savings_year1 = annual_savings_mln[0] / 12.0 if len(annual_savings_mln) > 0 else 0
 cost_of_delay_mln = monthly_savings_year1 * schedule_slippage
 
-# NPV Calculation (€M)
+# NPV Calculation (€M) - only for operational years
 cash_flows = [-eac_capex_mln] + annual_savings_mln
 discount_factors = [(1 + discount_rate) ** i for i in range(len(cash_flows))]
 dcf = [cf / df for cf, df in zip(cash_flows, discount_factors)]
@@ -97,15 +114,15 @@ kpi1, kpi2, kpi3, kpi4 = st.columns(4)
 with kpi1:
     st.metric(
         "2030 Grid Exposure (No Hedge)",
-        f"€{projected_grid_prices_mwh[-1]:.0f}/MWh",
-        f"€{legacy_opex_mln[-1]:.1f}M / yr bill",
+        f"€{projected_grid_prices_mwh[-1]:.0f}/MWh" if len(projected_grid_prices_mwh) > 0 else "N/A",
+        f"€{legacy_opex_mln[-1]:.1f}M / yr bill" if len(legacy_opex_mln) > 0 else "N/A",
         delta_color="inverse"
     )
 with kpi2:
     st.metric(
         "5-Year Microgrid NPV",
-        f"€{npv_mln:.1f}M",
-        f"Payback: ~{abs(eac_capex_mln / annual_savings_mln[0]):.1f} yrs",
+        f"€{npv_mln:.1f}M" if len(dcf) > 0 else "N/A",
+        f"Payback: ~{abs(eac_capex_mln / annual_savings_mln[0]):.1f} yrs" if len(annual_savings_mln) > 0 else "N/A",
         delta_color="normal" if npv_mln > 0 else "inverse"
     )
 with kpi3:
@@ -131,20 +148,50 @@ st.caption("Compares total factory energy expenditure under 100% grid reliance v
 
 fig_forecast = go.Figure()
 
-# Legacy line
-fig_forecast.add_trace(go.Scatter(
-    x=years, y=legacy_opex_mln,
-    mode='lines+markers', name='Unmitigated Grid OPEX (100% Exposure)',
-    line=dict(color='#dc2626', width=3)
-))
+# Add construction period as shaded area
+if construction_period_years > 0:
+    fig_forecast.add_vrect(
+        x0=construction_start_year,
+        x1=construction_start_year + construction_period_years - 1,
+        fillcolor="lightgray",
+        opacity=0.5,
+        line_width=0,
+        annotation_text="Construction Phase",
+        annotation_position="top left"
+    )
 
-# Microgrid protected line
-fig_forecast.add_trace(go.Scatter(
-    x=years, y=microgrid_opex_mln,
-    mode='lines+markers', name=f'Protected OPEX ({grid_offset_pct*100:.0f}% Clean Microgrid)',
-    line=dict(color='#059669', width=3),
-    fill='tonexty', fillcolor='rgba(16, 185, 129, 0.15)'  # Highlights the protected savings clearly
-))
+# Add slippage line if applicable
+if schedule_slippage > 0:
+    slippage_end_year = construction_start_year + construction_period_years - 1 + (schedule_slippage // 12)
+    fig_forecast.add_vline(
+        x=slippage_end_year + 1,
+        line_dash="dash",
+        line_color="red",
+        annotation_text=f"Slippage (+{schedule_slippage} months)",
+        annotation_position="top"
+    )
+
+# Legacy line (only for operational years)
+if len(legacy_opex_mln) > 0:
+    fig_forecast.add_trace(go.Scatter(
+        x=operational_years_adjusted,
+        y=legacy_opex_mln,
+        mode='lines+markers',
+        name='Unmitigated Grid OPEX (100% Exposure)',
+        line=dict(color='#dc2626', width=3)
+    ))
+
+# Microgrid protected line (only for operational years)
+if len(microgrid_opex_mln) > 0:
+    fig_forecast.add_trace(go.Scatter(
+        x=operational_years_adjusted,
+        y=microgrid_opex_mln,
+        mode='lines+markers',
+        name=f'Protected OPEX ({grid_offset_pct*100:.0f}% Clean Microgrid)',
+        line=dict(color='#059669', width=3),
+        fill='tonexty',
+        fillcolor='rgba(16, 185, 129, 0.15)'
+    ))
 
 fig_forecast.update_layout(
     height=380,
@@ -162,15 +209,65 @@ with col_bottom1:
     st.subheader("II. Delivery Governance: Microgrid Build Health (EVM)")
     st.caption("Tracks capital expenditure delivery using Earned Value Management.")
 
-    months_arr = np.arange(0, actual_duration + 1)
+    # Create timeline with construction and operational phases
+    months_arr = np.arange(0, actual_duration_months + 1)
     pv_arr = np.where(months_arr <= planned_duration, (bac_capex_mln / planned_duration) * months_arr, bac_capex_mln)
     ev_arr = (bac_capex_mln / actual_duration) * months_arr
     ac_arr = (eac_capex_mln / actual_duration) * months_arr
 
-    fig_evm = go.Figure()
-    fig_evm.add_trace(go.Scatter(x=months_arr, y=pv_arr, mode='lines', name='Planned Value (PV)', line=dict(dash='dash', color='#64748b', width=2)))
-    fig_evm.add_trace(go.Scatter(x=months_arr, y=ev_arr, mode='lines', name='Earned Value (EV)', line=dict(color='#0284c7', width=2.5)))
-    fig_evm.add_trace(go.Scatter(x=months_arr, y=ac_arr, mode='lines', name='Actual Cost (AC)', line=dict(color='#d97706', width=2.5)))
+    # Add construction period to EVM chart
+    construction_months = construction_period_years * 12
+    if construction_months > 0:
+        fig_evm = go.Figure()
+        fig_evm.add_trace(go.Scatter(
+            x=months_arr[:construction_months],
+            y=pv_arr[:construction_months],
+            mode='lines',
+            name='Planned Value (Construction)',
+            line=dict(dash='dash', color='#64748b', width=2)
+        ))
+        fig_evm.add_trace(go.Scatter(
+            x=months_arr[:construction_months],
+            y=ev_arr[:construction_months],
+            mode='lines',
+            name='Earned Value (Construction)',
+            line=dict(color='#fbbf24', width=2.5)
+        ))
+        fig_evm.add_trace(go.Scatter(
+            x=months_arr[:construction_months],
+            y=ac_arr[:construction_months],
+            mode='lines',
+            name='Actual Cost (Construction)',
+            line=dict(color='#d97706', width=2.5)
+        ))
+
+        # Add operational phase
+        fig_evm.add_trace(go.Scatter(
+            x=months_arr[construction_months:],
+            y=pv_arr[construction_months:],
+            mode='lines',
+            name='Planned Value (Operations)',
+            line=dict(dash='dash', color='#64748b', width=2)
+        ))
+        fig_evm.add_trace(go.Scatter(
+            x=months_arr[construction_months:],
+            y=ev_arr[construction_months:],
+            mode='lines',
+            name='Earned Value (Operations)',
+            line=dict(color='#0284c7', width=2.5)
+        ))
+        fig_evm.add_trace(go.Scatter(
+            x=months_arr[construction_months:],
+            y=ac_arr[construction_months:],
+            mode='lines',
+            name='Actual Cost (Operations)',
+            line=dict(color='#059669', width=2.5)
+        ))
+    else:
+        fig_evm = go.Figure()
+        fig_evm.add_trace(go.Scatter(x=months_arr, y=pv_arr, mode='lines', name='Planned Value (PV)', line=dict(dash='dash', color='#64748b', width=2)))
+        fig_evm.add_trace(go.Scatter(x=months_arr, y=ev_arr, mode='lines', name='Earned Value (EV)', line=dict(color='#0284c7', width=2.5)))
+        fig_evm.add_trace(go.Scatter(x=months_arr, y=ac_arr, mode='lines', name='Actual Cost (AC)', line=dict(color='#d97706', width=2.5)))
 
     fig_evm.update_layout(
         height=360,
@@ -185,8 +282,8 @@ with col_bottom2:
     st.subheader("III. Financial Return: Discounted Cash Flow Waterfall")
     st.caption("Initial microgrid construction Capex vs. cumulative discounted energy savings.")
 
-    waterfall_labels = ["Initial Capex"] + [f"Year {y}" for y in years] + ["Net Present Value"]
-    waterfall_measures = ["relative"] + ["relative"] * len(years) + ["total"]
+    waterfall_labels = ["Initial Capex"] + [f"Year {y}" for y in operational_years_adjusted] + ["Net Present Value"]
+    waterfall_measures = ["relative"] + ["relative"] * len(operational_years_adjusted) + ["total"]
     waterfall_values = [-eac_capex_mln] + dcf[1:] + [0]
 
     fig_waterfall = go.Figure(go.Waterfall(
@@ -206,7 +303,7 @@ with col_bottom2:
     )
     st.plotly_chart(fig_waterfall, use_container_width=True, config={'displayModeBar': True})
 
-# --- 6. METHODOLOGY & DATA SOURCES ---
+# --- 6. DATA SOURCES ---
 st.markdown("<br>", unsafe_allow_html=True)
 with st.expander("Data Sources", expanded=False):
     st.markdown("""
