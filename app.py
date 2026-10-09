@@ -26,18 +26,14 @@ st.markdown("""
 
     /* Plotly toolbar styling */
     .js-plotly-plot .modebar {
-        position: absolute;
-        top: 10px;
-        right: 10px;
+        position: absolute !important;
+        top: 30px !important;
+        right: 10px !important;
         background-color: white !important;
-        border-radius: 4px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        padding: 4px;
-        display: flex;
-        flex-direction: row !important;
-        flex-wrap: wrap;
-        max-width: 80%;
-        overflow-x: auto;
+        border-radius: 4px !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+        padding: 4px !important;
+        z-index: 100 !important;
     }
     .modebar-group {
         display: flex !important;
@@ -172,13 +168,16 @@ fig_forecast.add_trace(go.Scatter(
 ))
 
 fig_forecast.update_layout(
-    height=380,
+    height=400,
     yaxis_title="Annual Plant Electricity Cost (€M/year)",
     xaxis_title="Operational Year",
     hovermode="x unified",
-    margin=dict(t=20, b=20, l=20, r=20),
-    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+    margin=dict(t=40, b=40, l=40, r=40),
+    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+    plot_bgcolor='rgba(0,0,0,0)',
+    paper_bgcolor='rgba(0,0,0,0)'
 )
+
 st.plotly_chart(
     fig_forecast,
     use_container_width=True,
@@ -211,7 +210,9 @@ with col_bottom1:
         xaxis_title="Construction Timeline (Months)",
         yaxis_title="Cumulative Capital Spend (€M)",
         margin=dict(t=30, b=20, l=20, r=20),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)'
     )
     st.plotly_chart(
         fig_evm,
@@ -244,7 +245,9 @@ with col_bottom2:
     fig_waterfall.update_layout(
         height=360,
         yaxis_title="Discounted Cash Flow (€M)",
-        margin=dict(t=30, b=20, l=20, r=20)
+        margin=dict(t=30, b=20, l=20, r=20),
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)'
     )
     st.plotly_chart(
         fig_waterfall,
