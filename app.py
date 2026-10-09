@@ -7,27 +7,16 @@ import plotly.graph_objects as go
 # --- 1. RESPONSIVE PAGE CONFIGURATION ---
 st.set_page_config(page_title="Gigafactory Project and Capex Tracker", layout="wide", initial_sidebar_state="expanded")
 
+# Custom CSS to make Plotly toolbar open sideways
 st.markdown("""
     <style>
-    [data-testid="stMetric"] {
-        background-color: var(--secondary-background-color);
-        border: 1px solid rgba(128, 128, 128, 0.2);
-        border-radius: 10px;
-        padding: 18px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
-        transition: transform 0.2s ease-in-out;
+    .modebar {
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        justify-content: flex-start !important;
     }
-    [data-testid="stMetric"]:hover {
-        transform: translateY(-2px);
-        border-color: #0284c7;
-    }
-    .reference-link {
-        color: #0284c7;
-        text-decoration: none;
-        font-weight: 500;
-    }
-    .reference-link:hover {
-        text-decoration: underline;
+    .modebar-btn {
+        margin: 2px !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -154,7 +143,15 @@ fig_forecast.update_layout(
     margin=dict(t=20, b=20, l=20, r=20),
     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
 )
-st.plotly_chart(fig_forecast, use_container_width=True, config={'displayModeBar': True, 'modeBarButtonsToAdd': ['drawline', 'drawopenpath', 'drawclosedpath', 'drawcircle', 'drawrect', 'eraseshape']})
+st.plotly_chart(
+    fig_forecast,
+    use_container_width=True,
+    config={
+        'displayModeBar': True,
+        'displaylogo': False,
+        'modeBarButtonsToRemove': ['lasso2d', 'select2d'],  # Optional: Remove unwanted buttons
+    }
+)
 
 col_bottom1, col_bottom2 = st.columns(2)
 
@@ -179,7 +176,14 @@ with col_bottom1:
         margin=dict(t=30, b=20, l=20, r=20),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
-    st.plotly_chart(fig_evm, use_container_width=True, config={'displayModeBar': True, 'modeBarButtonsToAdd': ['drawline', 'drawopenpath', 'drawclosedpath', 'drawcircle', 'drawrect', 'eraseshape']})
+    st.plotly_chart(
+        fig_evm,
+        use_container_width=True,
+        config={
+            'displayModeBar': True,
+            'displaylogo': False,
+        }
+    )
 
 with col_bottom2:
     st.subheader("III. Financial Return: Discounted Cash Flow Waterfall")
@@ -204,11 +208,18 @@ with col_bottom2:
         yaxis_title="Discounted Cash Flow (€M)",
         margin=dict(t=30, b=20, l=20, r=20)
     )
-    st.plotly_chart(fig_waterfall, use_container_width=True, config={'displayModeBar': True, 'modeBarButtonsToAdd': ['drawline', 'drawopenpath', 'drawclosedpath', 'drawcircle', 'drawrect', 'eraseshape']})
+    st.plotly_chart(
+        fig_waterfall,
+        use_container_width=True,
+        config={
+            'displayModeBar': True,
+            'displaylogo': False,
+        }
+    )
 
 # --- 6. DATA SOURCES ---
 st.markdown("<br>", unsafe_allow_html=True)
-with st.expander(" Data Sources", expanded=False):
+with st.expander("Data Sources", expanded=False):
     st.markdown("""
     **1. Grid Rate Inflation & Gigafactory Energy Intensity:**
     > International Energy Agency (IEA). *"Global Supply Chains of EV Batteries."*
