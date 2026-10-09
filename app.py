@@ -96,30 +96,30 @@ kpi1, kpi2, kpi3, kpi4 = st.columns(4)
 
 with kpi1:
     st.metric(
-        "2030 Grid Exposure (No Hedge)", 
-        f"€{projected_grid_prices_mwh[-1]:.0f}/MWh", 
-        f"€{legacy_opex_mln[-1]:.1f}M / yr bill", 
+        "2030 Grid Exposure (No Hedge)",
+        f"€{projected_grid_prices_mwh[-1]:.0f}/MWh",
+        f"€{legacy_opex_mln[-1]:.1f}M / yr bill",
         delta_color="inverse"
     )
 with kpi2:
     st.metric(
-        "5-Year Microgrid NPV", 
-        f"€{npv_mln:.1f}M", 
-        f"Payback: ~{abs(eac_capex_mln / annual_savings_mln[0]):.1f} yrs", 
+        "5-Year Microgrid NPV",
+        f"€{npv_mln:.1f}M",
+        f"Payback: ~{abs(eac_capex_mln / annual_savings_mln[0]):.1f} yrs",
         delta_color="normal" if npv_mln > 0 else "inverse"
     )
 with kpi3:
     st.metric(
-        "Forecast Capex (EAC)", 
-        f"€{eac_capex_mln:.1f}M", 
-        f"Variance: €{cost_variance_mln:+.1f}M (CPI {cpi_performance:.2f})", 
+        "Forecast Capex (EAC)",
+        f"€{eac_capex_mln:.1f}M",
+        f"Variance: €{cost_variance_mln:+.1f}M (CPI {cpi_performance:.2f})",
         delta_color="inverse" if cost_variance_mln < 0 else "normal"
     )
 with kpi4:
     st.metric(
-        "Cost of Delay (CoD)", 
-        f"€{cost_of_delay_mln:.1f}M Loss", 
-        f"{schedule_slippage} Mo. Slippage (SPI {spi_performance:.2f})", 
+        "Cost of Delay (CoD)",
+        f"€{cost_of_delay_mln:.1f}M Loss",
+        f"{schedule_slippage} Mo. Slippage (SPI {spi_performance:.2f})",
         delta_color="inverse"
     )
 
@@ -133,15 +133,15 @@ fig_forecast = go.Figure()
 
 # Legacy line
 fig_forecast.add_trace(go.Scatter(
-    x=years, y=legacy_opex_mln, 
-    mode='lines+markers', name='Unmitigated Grid OPEX (100% Exposure)', 
+    x=years, y=legacy_opex_mln,
+    mode='lines+markers', name='Unmitigated Grid OPEX (100% Exposure)',
     line=dict(color='#dc2626', width=3)
 ))
 
 # Microgrid protected line
 fig_forecast.add_trace(go.Scatter(
-    x=years, y=microgrid_opex_mln, 
-    mode='lines+markers', name=f'Protected OPEX ({grid_offset_pct*100:.0f}% Clean Microgrid)', 
+    x=years, y=microgrid_opex_mln,
+    mode='lines+markers', name=f'Protected OPEX ({grid_offset_pct*100:.0f}% Clean Microgrid)',
     line=dict(color='#059669', width=3),
     fill='tonexty', fillcolor='rgba(16, 185, 129, 0.15)'  # Highlights the protected savings clearly
 ))
@@ -154,24 +154,24 @@ fig_forecast.update_layout(
     margin=dict(t=20, b=20, l=20, r=20),
     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
 )
-st.plotly_chart(fig_forecast, use_container_width=True, config={'displayModeBar': False})
+st.plotly_chart(fig_forecast, use_container_width=True, config={'displayModeBar': True})
 
 col_bottom1, col_bottom2 = st.columns(2)
 
 with col_bottom1:
     st.subheader("II. Delivery Governance: Microgrid Build Health (EVM)")
     st.caption("Tracks capital expenditure delivery using Earned Value Management.")
-    
+
     months_arr = np.arange(0, actual_duration + 1)
     pv_arr = np.where(months_arr <= planned_duration, (bac_capex_mln / planned_duration) * months_arr, bac_capex_mln)
     ev_arr = (bac_capex_mln / actual_duration) * months_arr
     ac_arr = (eac_capex_mln / actual_duration) * months_arr
-    
+
     fig_evm = go.Figure()
     fig_evm.add_trace(go.Scatter(x=months_arr, y=pv_arr, mode='lines', name='Planned Value (PV)', line=dict(dash='dash', color='#64748b', width=2)))
     fig_evm.add_trace(go.Scatter(x=months_arr, y=ev_arr, mode='lines', name='Earned Value (EV)', line=dict(color='#0284c7', width=2.5)))
     fig_evm.add_trace(go.Scatter(x=months_arr, y=ac_arr, mode='lines', name='Actual Cost (AC)', line=dict(color='#d97706', width=2.5)))
-    
+
     fig_evm.update_layout(
         height=360,
         xaxis_title="Construction Timeline (Months)",
@@ -179,16 +179,16 @@ with col_bottom1:
         margin=dict(t=30, b=20, l=20, r=20),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
-    st.plotly_chart(fig_evm, use_container_width=True, config={'displayModeBar': False})
+    st.plotly_chart(fig_evm, use_container_width=True, config={'displayModeBar': True})
 
 with col_bottom2:
     st.subheader("III. Financial Return: Discounted Cash Flow Waterfall")
     st.caption("Initial microgrid construction Capex vs. cumulative discounted energy savings.")
-    
+
     waterfall_labels = ["Initial Capex"] + [f"Year {y}" for y in years] + ["Net Present Value"]
     waterfall_measures = ["relative"] + ["relative"] * len(years) + ["total"]
     waterfall_values = [-eac_capex_mln] + dcf[1:] + [0]
-    
+
     fig_waterfall = go.Figure(go.Waterfall(
         name="NPV Waterfall", orientation="v",
         measure=waterfall_measures,
@@ -198,27 +198,27 @@ with col_bottom2:
         increasing={"marker": {"color": "#059669"}},
         totals={"marker": {"color": "#0284c7"}}
     ))
-    
+
     fig_waterfall.update_layout(
         height=360,
         yaxis_title="Discounted Cash Flow (€M)",
         margin=dict(t=30, b=20, l=20, r=20)
     )
-    st.plotly_chart(fig_waterfall, use_container_width=True, config={'displayModeBar': False})
+    st.plotly_chart(fig_waterfall, use_container_width=True, config={'displayModeBar': True})
 
 # --- 6. METHODOLOGY & DATA SOURCES ---
 st.markdown("<br>", unsafe_allow_html=True)
 with st.expander("Data Sources", expanded=False):
     st.markdown("""
     **1. Grid Rate Inflation & Gigafactory Energy Intensity:**
-    > International Energy Agency (IEA). *"Global Supply Chains of EV Batteries."* 
+    > International Energy Agency (IEA). *"Global Supply Chains of EV Batteries."*
     > <a href="https://www.iea.org/reports/global-supply-chains-of-ev-batteries" class="reference-link" target="_blank">IEA Official Report</a>
     <br><span style="font-size: 0.85em; color: gray;"><i>(Validates the ~45 kWh/kWh manufacturing energy intensity metric and the exposure of gigafactories to compounding grid price inflation).</i></span>
 
     <br>
 
     **2. Industrial Microgrid OPEX Reduction & Economic Optimization:**
-    > Piasecki, P., et al. *"Smart Management of Energy Storage in Microgrid."* **Sustainability 15**, 15576 (2023). 
+    > Piasecki, P., et al. *"Smart Management of Energy Storage in Microgrid."* **Sustainability 15**, 15576 (2023).
     > <a href="https://doi.org/10.3390/su152115576" class="reference-link" target="_blank">DOI: 10.3390/su152115576</a>
     <br><span style="font-size: 0.85em; color: gray;"><i>(Peer-reviewed framework modeling how on-site microgrids hedge against wholesale grid price volatility, yielding positive Net Present Value).</i></span>
     """, unsafe_allow_html=True)
