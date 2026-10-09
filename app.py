@@ -224,8 +224,20 @@ with col_bottom1:
     ev_arr = (bac_capex_mln / actual_duration_months) * months_arr
     ac_arr = (eac_capex_mln / actual_duration_months) * months_arr
 
-    # Create clean EVM chart with 3 lines
+    # Create EVM chart with 3 lines
     fig_evm = go.Figure()
+
+    # Add construction phase shading to EVM chart
+    if construction_period_years > 0:
+        fig_evm.add_vrect(
+            x0=0,
+            x1=construction_period_years * 12,
+            fillcolor="lightgray",
+            opacity=0.5,
+            line_width=0,
+            annotation_text=f"Construction ({construction_period_years} yrs)",
+            annotation_position="top left"
+        )
 
     # Planned Value (PV) - dashed gray line
     fig_evm.add_trace(go.Scatter(
