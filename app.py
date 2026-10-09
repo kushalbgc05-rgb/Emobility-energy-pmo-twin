@@ -54,7 +54,17 @@ with st.sidebar.expander("3. Microgrid Capex & Offset Target", expanded=True):
 
 with st.sidebar.expander("4. Project Phasing", expanded=True):
     construction_period_years = st.sidebar.slider("Construction Period (Years)", 1, 5, 2)
-    construction_start_year = st.sidebar.selectbox("Construction Start Year)", [2024, 2025, 2026])
+    current_year = pd.Timestamp.now().year
+    min_year = current_year
+    max_year = current_year + 20  # Allow up to 20 years in future
+
+    construction_start_year = st.sidebar.number_input(
+        "Construction Start Year",
+        min_value=min_year,
+        max_value=max_year,
+        value=min_year,
+        step=1
+    )
     schedule_slippage = st.sidebar.slider("Schedule Slippage (Months)", 0, 12, 3, 1)
     cpi_performance = st.sidebar.slider("Cost Performance Index (CPI)", 0.70, 1.20, 0.90, 0.01)
     spi_performance = st.sidebar.slider("Schedule Performance Index (SPI)", 0.70, 1.20, 0.85, 0.01)
@@ -62,8 +72,7 @@ with st.sidebar.expander("4. Project Phasing", expanded=True):
 
 # --- 3. CORE FINANCIAL & ENERGY CALCULATIONS ---
 # Calculate operational years (5 years after construction)
-operational_years = np.arange(2026, 2031)
-construction_years = np.arange(construction_start_year, construction_start_year + construction_period_years)
+operational_years = np.arange(construction_start_year + construction_period_years, construction_start_year + construction_period_years + 5)
 
 # Calculate total project duration in months (construction + 5 years operations)
 planned_duration_months = construction_period_years * 12 + 60  # 60 months = 5 years operations
@@ -146,11 +155,11 @@ fig_forecast = go.Figure()
 if construction_period_years > 0:
     fig_forecast.add_vrect(
         x0=construction_start_year,
-        x1=construction_start_year + construction_period_years - 1,
+        x1=construction_start_year + construction_period_years,
         fillcolor="lightgray",
         opacity=0.5,
         line_width=0,
-        annotation_text="Construction Phase",
+        annotation_text=f"Construction ({construction_period_years} yrs)",
         annotation_position="top left"
     )
 
@@ -247,7 +256,7 @@ with col_bottom1:
 
     fig_evm.update_layout(
         height=360,
-        xaxis_title="Construction Timeline (Months)",
+        xaxis_title="Project Timeline (Months)",
         yaxis_title="Cumulative Capital Spend (€M)",
         margin=dict(t=30, b=20, l=20, r=20),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
