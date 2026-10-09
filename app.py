@@ -83,6 +83,9 @@ construction_end_year = construction_start_year + construction_period_years - 1
 first_operational_year = construction_end_year + 1 + (schedule_slippage // 12)
 operational_years_adjusted = np.arange(first_operational_year, first_operational_year + 5)
 
+# Calculate the last operational year for KPI display
+last_operational_year = first_operational_year + 4  # Since we have 5 years of operations
+
 # 5-Year electricity trajectory (only for operational years)
 horizon_len = len(operational_years_adjusted)
 projected_grid_prices_mwh = [base_elec_mwh * ((1 + annual_elec_growth) ** i) for i in range(horizon_len)]
@@ -116,7 +119,7 @@ kpi1, kpi2, kpi3, kpi4 = st.columns(4)
 
 with kpi1:
     st.metric(
-        "2030 Grid Exposure (No Hedge)",
+        f"{last_operational_year} Grid Exposure (No Hedge)",
         f"€{projected_grid_prices_mwh[-1]:.0f}/MWh" if len(projected_grid_prices_mwh) > 0 else "N/A",
         f"€{legacy_opex_mln[-1]:.1f}M / yr bill" if len(legacy_opex_mln) > 0 else "N/A",
         delta_color="inverse"
