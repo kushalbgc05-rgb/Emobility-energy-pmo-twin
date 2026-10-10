@@ -49,7 +49,7 @@ with st.sidebar.expander("2. Gigafactory Operations", expanded=True):
     energy_intensity_kwh = 45  # kWh electricity per kWh battery output (IEA 2022)
 
 with st.sidebar.expander("3. Microgrid Capex & Offset Target", expanded=True):
-    bac_capex_mln = st.sidebar.number_input("Microgrid Budget (BAC) [€M)", 50.0, 400.0, 150.0, 10.0)
+    bac_capex_mln = st.sidebar.number_input("Microgrid Budget (BAC) [€M]", 50.0, 400.0, 150.0, 10.0)
     grid_offset_pct = st.sidebar.slider("Microgrid Generation Target (%)", 20.0, 80.0, 50.0, 5.0) / 100.0
 
 with st.sidebar.expander("4. Project Phasing", expanded=True):
@@ -74,8 +74,8 @@ with st.sidebar.expander("4. Project Phasing", expanded=True):
 # Calculate operational years (5 years after construction)
 operational_years = np.arange(construction_start_year + construction_period_years, construction_start_year + construction_period_years + 5)
 
-# Calculate total project duration in months (construction + 5 years operations)
-planned_duration_months = construction_period_years * 12 + 60  # 60 months = 5 years operations
+# Calculate construction duration in months (EVM applies strictly to construction phase)
+planned_duration_months = construction_period_years * 12
 actual_duration_months = planned_duration_months + schedule_slippage
 
 # Adjust operational years based on construction end + slippage
@@ -215,7 +215,7 @@ with col_bottom1:
     st.subheader("II. Delivery Governance: Microgrid Build Health (EVM)")
     st.caption("Tracks capital expenditure delivery using Earned Value Management.")
 
-    # Create timeline with construction and operational phases combined
+    # Create timeline for construction phase
     months_arr = np.arange(0, actual_duration_months + 1)
 
     # Calculate planned value (PV) - linear growth over total planned duration
