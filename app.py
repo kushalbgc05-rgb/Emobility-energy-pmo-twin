@@ -212,7 +212,7 @@ st.plotly_chart(fig_forecast, use_container_width=True, config={'displayModeBar'
 col_bottom1, col_bottom2 = st.columns(2)
 
 with col_bottom1:
-    st.subheader("II. Delivery Governance: Microgrid Build Health (EVM)")
+    st.subheader("II. Construction Phase Governance (EVM)")
     st.caption("Tracks capital expenditure delivery using Earned Value Management.")
 
     # Create timeline for construction phase
@@ -229,18 +229,6 @@ with col_bottom1:
 
     # Create EVM chart with 3 lines
     fig_evm = go.Figure()
-
-    # Add construction phase shading to EVM chart
-    if construction_period_years > 0:
-        fig_evm.add_vrect(
-            x0=0,
-            x1=construction_period_years * 12,
-            fillcolor="lightgray",
-            opacity=0.5,
-            line_width=0,
-            annotation_text=f"Construction ({construction_period_years} yrs)",
-            annotation_position="top left"
-        )
 
     # Planned Value (PV) - dashed gray line
     fig_evm.add_trace(go.Scatter(
@@ -271,7 +259,7 @@ with col_bottom1:
 
     fig_evm.update_layout(
         height=360,
-        xaxis_title="Project Timeline (Months)",
+        xaxis_title="Construction Timeline (Months)",
         yaxis_title="Cumulative Capital Spend (€M)",
         margin=dict(t=30, b=20, l=20, r=20),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
@@ -279,7 +267,7 @@ with col_bottom1:
     st.plotly_chart(fig_evm, use_container_width=True, config={'displayModeBar': True})
 
 with col_bottom2:
-    st.subheader("III. Financial Return: Discounted Cash Flow Waterfall")
+    st.subheader("III. Investment Payback Breakdown (NPV Waterfall)")
     st.caption("Initial microgrid construction Capex vs. cumulative discounted energy savings.")
 
     waterfall_labels = ["Initial Capex"] + [f"Year {y}" for y in operational_years_adjusted] + ["Net Present Value"]
